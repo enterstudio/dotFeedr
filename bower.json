@@ -1,0 +1,19 @@
+{
+  "name": "dotFeedr",
+  "version": "0.0.0",
+  "authors": [
+    "Martin Janeček <admin@ikw.cz>"
+  ],
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "easeljs": "~0.8.1"
+  }
+}
