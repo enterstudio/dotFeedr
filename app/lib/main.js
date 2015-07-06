@@ -42,10 +42,7 @@ function prepareWorld(width, height, localFeed, enemies) {
 	for (var foodKey in localFeed) {
 		if (localFeed.hasOwnProperty(foodKey)) {
 			var food = localFeed[foodKey];
-			var newFood = new Food(food.id, food.x, food.y, food.mass);
-			food.body = newFood;
-			feed[food.id] = food;
-			world.addChild(newFood);
+			createFood(food);
 		}
 	}
 
@@ -121,7 +118,18 @@ domReady(function () {
 	socketService.get().on('bubble_remove', removeEnemy);
 	socketService.get().on('bubble_create', createEnemy);
 	socketService.get().on('food_eat', eatFood);
+	socketService.get().on('food_create', createFood);
+	socketService.get().on('bubble_eat', eatBubble);
 });
+function eatBubble(data){
+	if(eater.id == bubble.id){
+
+	} else if(eaten.id == bubble.id){
+		bubble.remove();
+	} else {
+
+	}
+}
 
 function eatFood(data) {
 	var food = feed[data.food.id];
@@ -129,6 +137,13 @@ function eatFood(data) {
 		food.body.remove();
 		delete feed[food.id];
 	}
+}
+
+function createFood(food){
+	var newFood = new Food(food);
+	food.body = newFood;
+	feed[food.id] = food;
+	world.addChild(newFood);
 }
 
 function createEnemy(enemy) {

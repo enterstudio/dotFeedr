@@ -14,6 +14,7 @@ module.exports = createSubClass(Container, 'Bubble', {
 function Bubble_update(data) {
 	this.mass = data.mass;
 	this.size = data.size;
+	this.dead = data.dead;
 }
 function Bubble_initialize(bubble) {
 	Container.prototype.initialize.apply(this, arguments);
@@ -99,12 +100,20 @@ function mouseLook() {
 }
 
 function onTick(event) {
-	processActions.call(this);
-	move.call(this);
+	if(!this.dead){
+		processActions.call(this);
+		move.call(this);
+	}
 	redraw.call(this);
 }
 function redraw() {
-	this.body.graphics.clear().beginStroke('#333333').beginFill(this.color).drawCircle(0, 0, this.size);
+	this.body.graphics.clear()
+	if(!this.dead){
+		this.body.graphics.beginStroke('#333333').beginFill(this.color).drawCircle(0, 0, this.size);
+	} else {
+		this.removeChild(this.text);
+		this.removeChild(this.massText);
+	}
 	this.massText.text = this.mass;
 }
 
