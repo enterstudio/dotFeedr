@@ -36,17 +36,16 @@ function removeActor(obj) {
 }
 
 function distanceBewteen(o1, o2) {
-	return Math.sqrt(Math.pow(o1.x - o2.x, 2) + Math.pow(o1.y - o2.y,2))
+	return Math.sqrt(Math.pow(o1.x - o2.x, 2) + Math.pow(o1.y - o2.y, 2))
 }
 function broadastCollisions() {
 	var collisions = [];
 	actors.forEach(function (self) {
-		actors.forEach(function (other) {
-			var selfInfo = self._collisionInfo;
-			var otherInfo = other._collisionInfo;
-
-			if (self != other) {
-				if (selfInfo.type == 'bubble' && otherInfo.type == 'food') {
+		var selfInfo = self._collisionInfo;
+		if (selfInfo.type == 'bubble') {
+			actors.forEach(function (other) {
+				var otherInfo = other._collisionInfo;
+				if (otherInfo.type == 'food') {
 					var dist = self.size + other.size;
 					if (dist>distanceBewteen(self, other)) {
 						var collisionEvent = new EaselEvent('collision');
@@ -63,9 +62,10 @@ function broadastCollisions() {
 						})
 					}
 				}
-			}
-		});
+			});
+		}
 	});
+
 
 	collisions.forEach(function (info) {
 		info.target1.dispatchEvent(info.event);
