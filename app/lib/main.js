@@ -32,7 +32,7 @@ function prepareWorld() {
 
 	bubble = new Bubble('wodCZ', 250, 250);
 	world.addChild(bubble);
-	for (var i = 0; i<10; i++) {
+	for (var i = 0; i<1000; i++) {
 		var food = new Food(Math.random() * 5000, Math.random() * 5000, Math.min(5,Math.round(Math.random() * 20)));
 		world.addChild(food);
 	}
