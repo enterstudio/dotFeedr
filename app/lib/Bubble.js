@@ -7,9 +7,12 @@ var createSubClass = require('./utils/create_subclass')
 
 module.exports = createSubClass(Container, 'Bubble', {
 	initialize: Bubble_initialize,
-	update: Bubble_update
+	update: Bubble_update,
+	remove: Bubble_remove
 });
-
+function Bubble_remove(){
+	this.parent.removeChild(this);
+}
 
 function Bubble_update(data) {
 	this.mass = data.mass;

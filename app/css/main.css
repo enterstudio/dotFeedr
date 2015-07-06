@@ -19,3 +19,17 @@ html, body {
 
 	display: block;
 }
+
+#overlay {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	padding-top: 30px;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	z-index: 1000;
+	top: 0;
+	left: 0;
+	background: rgba(0,0,0,0.5);
+}

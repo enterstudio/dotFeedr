@@ -37,6 +37,11 @@ function handleEaselMouse(e){
 		lastMouseEvent = e;
 	}
 
+	if ($(e.nativeEvent.target).is('#overlas') || $(e.nativeEvent.target).closest('#overlay').length > 0) {
+
+		return;
+	}
+
 	currentActions.mouse = {
 		winX: e.rawX,
 		winY: e.rawY,
@@ -46,32 +51,6 @@ function handleEaselMouse(e){
 	};
 }
 
-function handleMouse(e) {
-	var canvasEl = stage && stage.canvas;
-	if (!canvasEl) return;
-	if (!e) {
-		if (lastMouseEvent) {
-			e = lastMouseEvent;
-		} else {
-			return;
-		}
-	} else {
-		lastMouseEvent = e;
-	}
-
-	var canvasXPos = canvasEl.offsetLeft;
-	var canvasYPos = canvasEl.offsetTop;
-
-	currentActions.mouse = {
-		winX: e.clientX,
-		winY: e.clientY,
-		stageX: e.clientX - canvasXPos - world.x,
-		stageY: e.clientY - canvasYPos - world.y,
-		target: e.target
-	};
-
-	console.log(currentActions.mouse);
-}
 function onKeyDown(e) {
 	var keyEvent = processEvent(e, 'down');
 	if (keyEvent) {

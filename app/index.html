@@ -6,11 +6,36 @@
 	<script src="//localhost:35729/livereload.js"></script>
 	<script src="http://127.0.0.1:9002/socket.io/socket.io.js"></script>
 	<script src="http://dotfeedr.ikw.cz:9002/socket.io/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 	<link rel="stylesheet" href="css/main.css">
 </head>
 <body>
 <canvas id="main" width="500" height="700"></canvas>
-
+<div id="overlay">
+	<div class="container">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">dotFeedr</h3>
+			</div>
+			<div class="panel-body">
+				<div class="container-fluid">
+					<div class="row">
+						<div class="col-sm-4">
+							<div class="form-group">
+								<input type="text" class="form-control" placeholder="Nickname" id="nickname">
+							</div>
+							<div class="form-group">
+								<button type="submit" class="btn btn-primary btn-block" id="play">Play</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 <script src="scripts/easeljs-0.8.1.combined.js"></script>
 <script src="scripts/app.bundle.js"></script>
 </body>

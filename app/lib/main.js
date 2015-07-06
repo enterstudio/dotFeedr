@@ -86,13 +86,24 @@ function prepareCanvas() {
 domReady(function () {
 	socketService.init();
 
+	$("#play").on('click', function(){
+		socketService.get().emit('play', {name: $("#nickname").val()});
+		$("#overlay").hide();
+	});
+
+	socketService.get().on('play', function (data) {
+		if(bubble){
+			bubble.remove();
+		}
+		bubble = new Bubble(data.bubble);
+		world.addChild(bubble);
+	});
+
 	socketService.get().on('init', function (data) {
 
-		bubble = new Bubble(data.bubble);
 		prepareCanvas();
 		prepareWorld(data.world.width, data.world.height, data.feed, data.bubbles);
 
-		world.addChild(bubble);
 
 		actionService.init(window, stage, world);
 
@@ -147,7 +158,7 @@ function createFood(food){
 }
 
 function createEnemy(enemy) {
-	if (enemy.id == bubble.id) {
+	if (bubble && enemy.id == bubble.id) {
 		return;
 	}
 
@@ -158,7 +169,7 @@ function createEnemy(enemy) {
 }
 
 function removeEnemy(enemy) {
-	if (enemy.id == bubble.id) {
+	if (bubble && enemy.id == bubble.id) {
 		return;
 	}
 
@@ -169,8 +180,14 @@ function removeEnemy(enemy) {
 }
 
 function updateEnemy(enemy) {
-	if (enemy.id == bubble.id) {
-		bubble.update(enemy);
+	if (bubble && enemy.id == bubble.id) {
+		if(enemy.dead){
+			$("#overlay").show();
+			bubble.remove();
+			bubble = null;
+		} else {
+			bubble.update(enemy);
+		}
 		return;
 	}
 
