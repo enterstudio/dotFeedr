@@ -78,10 +78,16 @@ function move() {
 	}
 
 
+	if (this.distance>this.size * 3) {
+		this.thrust = 1;
+	} else {
+		this.thrust = this.distance / (this.size *3);
+	}
+
 	/*
 	 * Speed calculation
 	 */
-	this.speed = 10 - Math.min(4, this.mass/500);
+	this.speed = (10 - Math.min(4, this.mass / 500)) * this.thrust;
 
 	hudService.dispatchEvent({
 		type: 'set',
@@ -91,14 +97,8 @@ function move() {
 		}
 	});
 
-	if (this.distance>this.size * 3) {
-		this.thrust = 1;
-	} else {
-		this.thrust = this.distance / (this.size *3);
-	}
-
-	var ratioX = Math.sin((this.rotation) * Math.PI / 180) * this.thrust;
-	var ratioY = Math.cos((this.rotation) * Math.PI / 180) * this.thrust * -1;
+	var ratioX = Math.sin((this.rotation) * Math.PI / 180);
+	var ratioY = Math.cos((this.rotation) * Math.PI / 180) * -1;
 	var diffX = ratioX * this.speed;
 	var diffY = ratioY * this.speed;
 
