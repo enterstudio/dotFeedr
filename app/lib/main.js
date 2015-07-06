@@ -3,9 +3,9 @@
 var utils = require('./utils')
 	, Bubble = require('./Bubble')
 	, Food = require('./Food')
-	, collisionService = require('./collisions')
-	, hud = require('./hud')
+	, Enemy = require('./Enemy')
 	, actionService = require('./actions')
+	, socketService = require('./socket')
 	, domReady = utils.domReady;
 
 var c = createjs
@@ -15,65 +15,156 @@ var c = createjs
 	, _H
 	, xCenter
 	, yCenter
-	, wWidth = 5000
-	, wHeight = 5000
+	, wWidth
+	, wHeight
 	, world
 	, canvas
+	, feed = []
+	, localEnemies = {}
 	;
 
 console.log('Start, EaselJS v.:' + c.EaselJS.version);
 
-function prepareWorld() {
+function prepareWorld(width, height, localFeed, enemies) {
+	wWidth = width;
+	wHeight = height;
+
 	stage = new c.Stage('main');
+
+	stage.enableMouseOver();
+	c.Touch.enable(stage);
+
 	world = new c.Container();
 	world.x = 0;
 	world.y = 0;
 	stage.addChild(world);
 
-	bubble = new Bubble('wodCZ', 250, 250);
-	world.addChild(bubble);
-	for (var i = 0; i<1000; i++) {
-		var food = new Food(Math.random() * 5000, Math.random() * 5000, Math.min(5,Math.round(Math.random() * 20)));
-		world.addChild(food);
+	for (var foodKey in localFeed) {
+		if (localFeed.hasOwnProperty(foodKey)) {
+			var food = localFeed[foodKey];
+			var newFood = new Food(food.id, food.x, food.y, food.mass);
+			food.body = newFood;
+			feed[food.id] = food;
+			world.addChild(newFood);
+		}
 	}
 
+	redrawEnemies(enemies);
 
 }
+
+function redrawEnemies(enemies) {
+	for (var key in enemies) {
+		if (enemies.hasOwnProperty(key)) {
+			var enemy = enemies[key];
+			createEnemy(enemy);
+		}
+	}
+
+}
+
+
+
 function updateBackground() {
 	var x = world.x,
 		y = world.y;
 
-	canvas.style.backgroundPositionX = x + 'px';
-	canvas.style.backgroundPositionY = y + 'px';
+	if (!c.Touch.isSupported()) {
+		canvas.style.backgroundPositionX = x + 'px';
+		canvas.style.backgroundPositionY = y + 'px';
+	}
 }
+
+
+
 function prepareCanvas() {
 	var mainElement = document.getElementById('main');
 	mainElement.height = _H = window.innerHeight - 5;
 	mainElement.width = _W = window.innerWidth;
 	xCenter = _W / 2;
 	yCenter = _H / 2;
-	hud.init(_W, _H);
 }
+
+
 domReady(function () {
+	socketService.init();
 
-	prepareCanvas();
-	prepareWorld();
+	socketService.get().on('init', function (data) {
 
-	stage.addChild(hud.get());
+		bubble = new Bubble(data.bubble);
+		prepareCanvas();
+		prepareWorld(data.world.width, data.world.height, data.feed, data.bubbles);
 
-	actionService.init(window, stage, world);
-	canvas = stage.canvas;
-	c.Ticker.timingMode = c.Ticker.RAF;
-	c.Ticker.setFPS(60);
+		world.addChild(bubble);
 
-	c.Ticker.addEventListener('tick', function (event) {
-		actionService.handleMouse();
-		cameraMove();
-		updateBackground();
-		collisionService.broadastCollisions();
-		stage.update();
-	})
+		actionService.init(window, stage, world);
+
+
+
+		canvas = stage.canvas;
+		c.Ticker.timingMode = c.Ticker.RAF;
+		c.Ticker.setFPS(30);
+		if (!c.Touch.isSupported()) {
+			c.Ticker.setFPS(60);
+		}
+
+		c.Ticker.addEventListener('tick', function (event) {
+			if (bubble) {
+				actionService.handleMouse();
+				cameraMove();
+			}
+			updateBackground();
+			stage.update();
+		})
+	});
+	socketService.get().on('bubble_update', updateEnemy);
+	socketService.get().on('bubble_remove', removeEnemy);
+	socketService.get().on('bubble_create', createEnemy);
+	socketService.get().on('food_eat', eatFood);
 });
+
+function eatFood(data) {
+	var food = feed[data.food.id];
+	if (food) {
+		food.body.remove();
+		delete feed[food.id];
+	}
+}
+
+function createEnemy(enemy) {
+	if (enemy.id == bubble.id) {
+		return;
+	}
+
+	var newEnemy = new Enemy(enemy);
+	enemy.body = newEnemy;
+	localEnemies[enemy.id] = enemy;
+	world.addChild(newEnemy);
+}
+
+function removeEnemy(enemy) {
+	if (enemy.id == bubble.id) {
+		return;
+	}
+
+	if (localEnemies.hasOwnProperty(enemy.id)) {
+		localEnemies[enemy.id].body.remove();
+		delete localEnemies[enemy.id];
+	}
+}
+
+function updateEnemy(enemy) {
+	if (enemy.id == bubble.id) {
+		bubble.update(enemy);
+		return;
+	}
+
+	var localEnemy = localEnemies[enemy.id];
+	localEnemy.body.update(enemy);
+	localEnemy.x = enemy.x;
+	localEnemy.y = enemy.y;
+	localEnemies[enemy.id] = localEnemy;
+}
 
 function cameraMove() {
 	if (wWidth>_W) {

@@ -11,7 +11,7 @@ var currentActions = {};
 var actionService = module.exports = {
 	init: actions_init,
 	get: actions_get,
-	handleMouse: handleMouse
+	handleMouse: handleEaselMouse
 };
 var stage, world, lastMouseEvent;
 
@@ -22,7 +22,28 @@ function actions_init(win, currentStage, currentWorld) {
 	EventDispatcher.initialize(actionService);
 	win.addEventListener('keydown', onKeyDown);
 	win.addEventListener('keyup', onKeyUp);
-	win.addEventListener('mousemove', handleMouse);
+	//win.addEventListener('mousemove', handleMouse);
+	stage.on('stagemousemove', handleEaselMouse);
+}
+
+function handleEaselMouse(e){
+	if (!e) {
+		if (lastMouseEvent) {
+			e = lastMouseEvent;
+		} else {
+			return;
+		}
+	} else {
+		lastMouseEvent = e;
+	}
+
+	currentActions.mouse = {
+		winX: e.rawX,
+		winY: e.rawY,
+		stageX: e.stageX - world.x,
+		stageY: e.stageY - world.y,
+		target: e.target
+	};
 }
 
 function handleMouse(e) {
@@ -32,10 +53,7 @@ function handleMouse(e) {
 		if (lastMouseEvent) {
 			e = lastMouseEvent;
 		} else {
-			e = {
-				clientX: world.x,
-				clientY: world.y
-			}
+			return;
 		}
 	} else {
 		lastMouseEvent = e;
@@ -52,6 +70,7 @@ function handleMouse(e) {
 		target: e.target
 	};
 
+	console.log(currentActions.mouse);
 }
 function onKeyDown(e) {
 	var keyEvent = processEvent(e, 'down');

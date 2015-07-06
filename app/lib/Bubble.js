@@ -1,56 +1,41 @@
 'use strict';
 var createSubClass = require('./utils/create_subclass')
 	, actionService = require('./actions')
-	, hudService = require('./hud')
-	, collisionService = require('./collisions')
+	, socketService = require('./socket')
 	, Container = createjs.Container;
 
 
 module.exports = createSubClass(Container, 'Bubble', {
 	initialize: Bubble_initialize,
-	fire: Bubble_fire
+	update: Bubble_update
 });
 
 
-function onCollision(e) {
-	var other = e.data.other;
-
-	if (other._collisionInfo.type == "food") {
-		this.newMass += other.mass;
-	}
-	hudService.dispatchEvent({
-		type: 'set',
-		data: {
-			property: 'mass',
-			value: this.newMass
-		}
-	});
+function Bubble_update(data) {
+	this.mass = data.mass;
+	this.size = data.size;
 }
-function Bubble_initialize(name, x, y) {
+function Bubble_initialize(bubble) {
 	Container.prototype.initialize.apply(this, arguments);
-	this.name = name;
-	this.x = x;
-	this.y = y;
+	for(var key in bubble){
+		if(bubble.hasOwnProperty(key)){
+			this[key] = bubble[key];
+		}
+	}
+
+	this.lookX = this.x;
+	this.lookY = this.y;
 
 	setupProperties.call(this);
 	setupDisplay.call(this);
 
-	collisionService.addActor(this, 'bubble')
 
 	this.on('tick', onTick);
-	this.on('collision', onCollision);
 }
 
 function setupProperties() {
-	this.name = 'bubble';
 	this.thrust = 1;
-	this.lookX = 0;
-	this.lookY = 0;
-	this.rotation = 0;
-	this.mass = 50;
 	this.speed = 0;
-	this.newMass = 50;
-	this.size = 0;
 	this.distance = 0;
 }
 
@@ -60,17 +45,10 @@ function processActions() {
 	if (actions.mouse) {
 		this.lookX = actions.mouse.stageX;
 		this.lookY = actions.mouse.stageY;
+
+		mouseLook.call(this);
 	}
 
-	mouseLook.call(this);
-
-}
-function grow() {
-	if ((this.newMass - this.mass)<1) {
-		this.mass = this.newMass;
-	} else {
-		this.mass += (this.newMass - this.mass) / 10;
-	}
 }
 function move() {
 	if (Math.abs(this.lookX - this.x)<=this.speed && Math.abs(this.lookY - this.y)<=this.speed) {
@@ -81,30 +59,32 @@ function move() {
 	if (this.distance>this.size * 3) {
 		this.thrust = 1;
 	} else {
-		this.thrust = this.distance / (this.size *3);
+		this.thrust = this.distance / (this.size * 3);
 	}
 
 	/*
 	 * Speed calculation
 	 */
-	this.speed = (10 - Math.min(4, this.mass / 500)) * this.thrust;
-
-	hudService.dispatchEvent({
-		type: 'set',
-		data: {
-			property: 'speed',
-			value: this.speed
-		}
-	});
+	var decreasement = 3*(Math.log(this.mass + 200)/Math.LN10) - 6.90309;
+	this.speed = Math.round(((5 - decreasement) * this.thrust)*1000)/1000;
+	this.speed *= this.speedModifier;
 
 	var ratioX = Math.sin((this.rotation) * Math.PI / 180);
 	var ratioY = Math.cos((this.rotation) * Math.PI / 180) * -1;
 	var diffX = ratioX * this.speed;
 	var diffY = ratioY * this.speed;
 
-
 	this.x += diffX;
 	this.y += diffY;
+
+	if (Math.abs(diffX)>1 / 1000 || Math.abs(diffY)>1 / 1000) {
+		socketService.get().emit('bubble_move', {
+			x: this.x,
+			y: this.y,
+			rotation: this.rotation
+		});
+	}
+
 
 }
 function mouseLook() {
@@ -121,20 +101,28 @@ function mouseLook() {
 function onTick(event) {
 	processActions.call(this);
 	move.call(this);
-	grow.call(this);
 	redraw.call(this);
 }
 function redraw() {
-	this.size = Math.sqrt(this.mass / Math.PI) * 10;
-	this.body.graphics.clear().beginFill('blue').drawCircle(0, 0, this.size);
+	this.body.graphics.clear().beginStroke('#333333').beginFill(this.color).drawCircle(0, 0, this.size);
+	this.massText.text = this.mass;
 }
 
 function setupDisplay() {
-	this.body = new createjs.Shape();
-	redraw.call(this);
-	this.addChild(this.body);
-}
 
-function Bubble_fire() {
-	console.log('fire!');
+	this.body = new createjs.Shape();
+	this.addChild(this.body);
+
+
+	this.text = new createjs.Text(this.name, '14px Verdana', '#ffffff');
+	this.text.textAlign = 'center';
+	this.addChild(this.text);
+
+
+	this.massText = new createjs.Text(this.mass, 'bold 16px Verdana', '#ffffff');
+	this.massText.textAlign = 'center';
+	this.massText.y -= 20;
+	this.addChild(this.massText);
+
+	redraw.call(this);
 }
