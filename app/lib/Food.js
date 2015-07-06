@@ -21,10 +21,11 @@ function Food_initialize(x, y, mass) {
 	this.mass = mass;
 
 	this.body = new createjs.Shape();
-	this.body.graphics.beginFill('yellow').drawCircle(0, 0, this.mass)
+	this.size = Math.sqrt(this.mass / Math.PI) * 5;
+	this.body.graphics.beginFill('green').drawCircle(0, 0, this.size);
 	this.addChild(this.body);
 
-	collisionService.addActor(this, 'food', {radius: this.mass});
+	collisionService.addActor(this, 'food');
 
 	this.on('collision', onCollision);
 }

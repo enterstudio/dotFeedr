@@ -47,7 +47,7 @@ function broadastCollisions() {
 
 			if (self != other) {
 				if (selfInfo.type == 'bubble' && otherInfo.type == 'food') {
-					var dist = self.mass + other.mass;
+					var dist = self.size + other.size;
 					if (dist>distanceBewteen(self, other)) {
 						var collisionEvent = new EaselEvent('collision');
 						collisionEvent.data = {
@@ -66,9 +66,7 @@ function broadastCollisions() {
 			}
 		});
 	});
-	if (collisions.length) {
-		console.log(collisions);
-	}
+
 	collisions.forEach(function (info) {
 		info.target1.dispatchEvent(info.event);
 		info.target2.dispatchEvent(info.event);
