@@ -15,8 +15,6 @@ var c = createjs
 	, _H
 	, xCenter
 	, yCenter
-	, wWidth
-	, wHeight
 	, world
 	, canvas
 	, feed = []
@@ -26,9 +24,6 @@ var c = createjs
 console.log('Start, EaselJS v.:' + c.EaselJS.version);
 
 function prepareWorld(width, height, localFeed, enemies) {
-	wWidth = width;
-	wHeight = height;
-
 	stage = new c.Stage('main');
 
 	stage.enableMouseOver();
@@ -37,6 +32,8 @@ function prepareWorld(width, height, localFeed, enemies) {
 	world = new c.Container();
 	world.x = 0;
 	world.y = 0;
+	world.width = width;
+	world.height = height;
 	stage.addChild(world);
 
 	for (var foodKey in localFeed) {
@@ -95,7 +92,7 @@ domReady(function () {
 		if(bubble){
 			bubble.remove();
 		}
-		bubble = new Bubble(data.bubble);
+		bubble = new Bubble(data.bubble, world);
 		world.addChild(bubble);
 	});
 
@@ -118,7 +115,6 @@ domReady(function () {
 
 		c.Ticker.addEventListener('tick', function (event) {
 			if (bubble) {
-				actionService.handleMouse();
 				cameraMove();
 			}
 			updateBackground();
@@ -199,22 +195,24 @@ function updateEnemy(enemy) {
 }
 
 function cameraMove() {
-	if (wWidth>_W) {
-		if (bubble.x<wWidth - xCenter && bubble.x>xCenter) {
-			world.x = -bubble.x + xCenter;
-		} else if (bubble.x>=wWidth - xCenter) {
-			world.x = -(wWidth - _W)
-		} else {
-			world.x = 0;
-		}
-	}
-	if (wHeight>_H) {
-		if (bubble.y<wHeight - yCenter && bubble.y>yCenter) {
-			world.y = -bubble.y + yCenter;
-		} else if (bubble.y>=wHeight - yCenter) {
-			world.y = -(wHeight - _H);
-		} else {
-			world.y = 0;
-		}
-	}
+	world.x = -bubble.x + xCenter;
+	world.y = -bubble.y + yCenter;
+	//if (world.width>_W) {
+	//	if (bubble.x<world.width - xCenter && bubble.x>xCenter) {
+	//		world.x = -bubble.x + xCenter;
+	//	} else if (bubble.x>=world.width - xCenter) {
+	//		world.x = -(world.width - _W)
+	//	} else {
+	//		world.x = 0;
+	//	}
+	//}
+	//if (world.height>_H) {
+	//	if (bubble.y<world.height - yCenter && bubble.y>yCenter) {
+	//		world.y = -bubble.y + yCenter;
+	//	} else if (bubble.y>=world.height - yCenter) {
+	//		world.y = -(world.height - _H);
+	//	} else {
+	//		world.y = 0;
+	//	}
+	//}
 }

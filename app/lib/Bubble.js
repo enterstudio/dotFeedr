@@ -10,7 +10,11 @@ module.exports = createSubClass(Container, 'Bubble', {
 	update: Bubble_update,
 	remove: Bubble_remove
 });
-function Bubble_remove(){
+
+var bubble
+	, world;
+
+function Bubble_remove() {
 	this.parent.removeChild(this);
 }
 
@@ -19,58 +23,54 @@ function Bubble_update(data) {
 	this.size = data.size;
 	this.dead = data.dead;
 }
-function Bubble_initialize(bubble) {
+function Bubble_initialize(data, worldData) {
 	Container.prototype.initialize.apply(this, arguments);
-	for(var key in bubble){
-		if(bubble.hasOwnProperty(key)){
-			this[key] = bubble[key];
+	for (var key in data) {
+		if (data.hasOwnProperty(key)) {
+			this[key] = data[key];
 		}
 	}
-
-	this.lookX = this.x;
-	this.lookY = this.y;
+	bubble = this;
+	world = worldData;
 
 	setupProperties.call(this);
 	setupDisplay.call(this);
+	actionService.on('mouse', onMouse);
+	actionService.on('spacebar', onSpacebar);
 
 
 	this.on('tick', onTick);
 }
 
+function onSpacebar(e) {
+	alert('.');
+}
+
 function setupProperties() {
 	this.thrust = 1;
 	this.speed = 0;
-	this.distance = 0;
 }
 
-function processActions() {
-	var actions = actionService.get();
-
-	if (actions.mouse) {
-		this.lookX = actions.mouse.stageX;
-		this.lookY = actions.mouse.stageY;
-
-		mouseLook.call(this);
+function onMouse(e) {
+	if (!e) {
+		return;
+	}
+	bubble.rotation = Math.atan2(e.data.stageY - bubble.y, e.data.stageX - bubble.x) * (180 / Math.PI) + 90;
+	var distance = Math.sqrt(Math.pow(bubble.x - e.data.stageX, 2) + Math.pow(bubble.y - e.data.stageY, 2));
+	if (distance>bubble.size) {
+		bubble.thrust = 1;
+	} else {
+		bubble.thrust = distance / bubble.size;
 	}
 
 }
 function move() {
-	if (Math.abs(this.lookX - this.x)<=this.speed && Math.abs(this.lookY - this.y)<=this.speed) {
-		return;
-	}
-
-
-	if (this.distance>this.size * 3) {
-		this.thrust = 1;
-	} else {
-		this.thrust = this.distance / (this.size * 3);
-	}
 
 	/*
 	 * Speed calculation
 	 */
-	var decreasement = 3*(Math.log(this.mass + 200)/Math.LN10) - 6.90309;
-	this.speed = Math.round(((5 - decreasement) * this.thrust)*1000)/1000;
+	var decreasement = 3 * (Math.log(this.mass + 200) / Math.LN10) - 6.90309;
+	this.speed = Math.round(((5 - decreasement) * this.thrust) * 1000) / 1000;
 	this.speed *= this.speedModifier;
 
 	var ratioX = Math.sin((this.rotation) * Math.PI / 180);
@@ -78,10 +78,29 @@ function move() {
 	var diffX = ratioX * this.speed;
 	var diffY = ratioY * this.speed;
 
-	this.x += diffX;
-	this.y += diffY;
+	var moved = false;
+	if (diffX<0 && this.x + diffX>this.size / 3) {
+		this.x += diffX;
+		moved = true;
+	}
 
-	if (Math.abs(diffX)>1 / 1000 || Math.abs(diffY)>1 / 1000) {
+	if (diffX>0 && this.x + diffX<world.width - this.size / 3) {
+		this.x += diffX;
+		moved = true;
+	}
+
+	if (diffY<0 && this.y + diffY>this.size / 3) {
+		this.y += diffY;
+		moved = true;
+	}
+
+	if (diffY>0 && this.y + diffY<world.height - this.size / 3) {
+		this.y += diffY;
+		moved = true;
+	}
+
+
+	if ((Math.abs(diffX)>1 / 1000 || Math.abs(diffY)>1 / 1000) && moved) {
 		socketService.get().emit('bubble_move', {
 			x: this.x,
 			y: this.y,
@@ -91,27 +110,17 @@ function move() {
 
 
 }
-function mouseLook() {
-	var x1 = this.x,
-		x2 = this.lookX,
-		y1 = this.y,
-		y2 = this.lookY;
-	this.rotation = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI) + 90;
-	this.distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-
-
-}
 
 function onTick(event) {
-	if(!this.dead){
-		processActions.call(this);
+	if (!this.dead) {
+		onMouse.call(this);
 		move.call(this);
 	}
 	redraw.call(this);
 }
 function redraw() {
 	this.body.graphics.clear()
-	if(!this.dead){
+	if (!this.dead) {
 		this.body.graphics.beginStroke('#333333').beginFill(this.color).drawCircle(0, 0, this.size);
 	} else {
 		this.removeChild(this.text);

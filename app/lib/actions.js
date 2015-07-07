@@ -28,27 +28,25 @@ function actions_init(win, currentStage, currentWorld) {
 
 function handleEaselMouse(e){
 	if (!e) {
-		if (lastMouseEvent) {
-			e = lastMouseEvent;
-		} else {
-			return;
-		}
-	} else {
-		lastMouseEvent = e;
+		return;
 	}
-
-	if ($(e.nativeEvent.target).is('#overlas') || $(e.nativeEvent.target).closest('#overlay').length > 0) {
-
+	if ($(e.nativeEvent.target).closest('#overlay').length > 0) {
 		return;
 	}
 
-	currentActions.mouse = {
+	var eventData = {
 		winX: e.rawX,
 		winY: e.rawY,
 		stageX: e.stageX - world.x,
 		stageY: e.stageY - world.y,
 		target: e.target
 	};
+
+	var MouseEvent = new EaselEvent('mouse');
+	MouseEvent.data = eventData;
+	MouseEvent.nativeEvent = e;
+
+	actionService.dispatchEvent(MouseEvent);
 }
 
 function onKeyDown(e) {
